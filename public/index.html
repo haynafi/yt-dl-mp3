@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YouTube to MP3 Converter</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @keyframes fillProgress {
+      0% { width: 0%; }
+      100% { width: 100%; }
+    }
+    .progress-fill {
+      animation: fillProgress 3s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-[#F0F0F0] min-h-screen flex flex-col font-mono">
+  <div class="flex-grow flex items-center justify-center p-4">
+    <div class="bg-white border-4 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] p-8 w-full max-w-3xl">
+      <div class="text-center mb-12">
+        <h1 class="text-6xl font-black text-black mb-4 uppercase tracking-tight">YOUTUBE TO MP3</h1>
+        <div class="w-32 h-2 bg-[#00FF00] mx-auto border-2 border-black"></div>
+      </div>
+
+      <div class="space-y-8">
+        <div>
+          <label for="youtubeUrl" class="block text-xl font-black text-black mb-3 uppercase">
+            PASTE URL HERE
+          </label>
+          <input
+            type="text"
+            id="youtubeUrl"
+            placeholder="https://www.youtube.com/watch?v=..."
+            class="w-full px-6 py-4 border-4 border-black text-lg font-bold focus:outline-none focus:border-[#00FF00] bg-white transition-colors"
+          />
+        </div>
+
+        <button
+          id="convertBtn"
+          class="w-full bg-[#00FF00] border-4 border-black text-black font-black py-6 px-8 text-2xl uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none active:translate-x-[8px] active:translate-y-[8px] transition-all duration-150"
+        >
+          CONVERT TO MP3
+        </button>
+
+        <div id="loadingState" class="hidden">
+          <div class="bg-white border-4 border-black p-8">
+            <p class="text-2xl font-black text-black mb-6 uppercase text-center">CONVERTING...</p>
+            <div class="w-full h-12 bg-white border-4 border-black overflow-hidden">
+              <div class="progress-fill h-full bg-[#FFFF00] border-r-4 border-black"></div>
+            </div>
+            <p class="text-center text-black font-bold mt-4 uppercase text-sm">PLEASE WAIT</p>
+          </div>
+        </div>
+
+        <div id="downloadState" class="hidden">
+          <div class="bg-[#FF00FF] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div class="text-center mb-6">
+              <div class="inline-block bg-black text-[#FF00FF] px-6 py-3 text-4xl font-black mb-4">✓</div>
+              <p class="text-2xl font-black text-black uppercase">READY!</p>
+            </div>
+            <button
+              id="downloadBtn"
+              class="w-full bg-black border-4 border-black text-[#FF00FF] font-black py-6 px-8 text-2xl uppercase shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,1)] hover:translate-x-[4px] hover:translate-y-[4px] active:shadow-none active:translate-x-[8px] active:translate-y-[8px] transition-all duration-150"
+            >
+              DOWNLOAD MP3
+            </button>
+          </div>
+        </div>
+
+        <div id="errorState" class="hidden">
+          <div class="bg-[#FF0000] border-4 border-black p-8 shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]">
+            <div class="flex items-start">
+              <div class="bg-black text-[#FF0000] px-4 py-2 text-3xl font-black mr-4">!</div>
+              <div class="flex-1">
+                <h3 class="text-2xl font-black text-black mb-2 uppercase">ERROR</h3>
+                <p id="errorMessage" class="text-black font-bold text-lg"></p>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer class="text-center py-8">
+    <p class="text-xl font-black text-black uppercase tracking-wider">MADE WITH LOVE</p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
