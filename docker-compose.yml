@@ -1,19 +1,10 @@
 services:
   app:
     build: .
-    expose:
-      - "3000"
+    ports:
+      - "127.0.0.1:3000:3000"
     environment:
       PORT: 3000
-      TRUST_PROXY: 1
+      TRUST_PROXY: 2
       BASE_PATH: /yt-to-mp3
-    restart: unless-stopped
-
-  cloudflared:
-    image: cloudflare/cloudflared:latest
-    command: tunnel --no-autoupdate run
-    environment:
-      TUNNEL_TOKEN: ${TUNNEL_TOKEN}
-    depends_on:
-      - app
     restart: unless-stopped
