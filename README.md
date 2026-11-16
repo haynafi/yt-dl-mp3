@@ -105,7 +105,7 @@ http://localhost:3000
 docker compose up -d --build
 ```
 
-The app is exposed to the internet through a Cloudflare Tunnel. Copy `.env.example` to `.env`, fill in `TUNNEL_TOKEN`, and point the tunnel's public hostname to `http://app:3000`.
+The app is exposed to the internet through a Cloudflare Tunnel. Copy `.env.example` to `.env`, fill in `TUNNEL_TOKEN`, and point the tunnel route (`jikken.dev`, path `^/yt-to-mp3`) to `http://app:3000`. The app is served under `BASE_PATH` (`/yt-to-mp3`); leave it empty to serve from the root..
 
 `TRUST_PROXY` (default `1` in `docker-compose.yml`) sets how many reverse proxies sit in front of the app, so rate limiting reads the real client IP.
 

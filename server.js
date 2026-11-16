@@ -16,9 +16,12 @@ if (process.env.TRUST_PROXY) {
   app.set('trust proxy', Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
 }
 
+const BASE_PATH = (process.env.BASE_PATH || '').replace(/\/+$/, '');
+const router = express.Router();
+
 app.use(cors());
 app.use(express.json());
-app.use(express.static('public'));
+router.use(express.static(path.join(__dirname, 'public')));
 
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -28,11 +31,7 @@ const limiter = rateLimit({
   legacyHeaders: false,
 });
 
-app.use('/convert', limiter);
-
-app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'public', 'index.html'));
-});
+router.use('/convert', limiter);
 
 const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be'];
 const MAX_DURATION_SECONDS = 60 * 60;
@@ -57,7 +56,7 @@ function buildFilename(title) {
   };
 }
 
-app.post('/convert', async (req, res) => {
+router.post('/convert', async (req, res) => {
   const url = typeof req.body?.url === 'string' ? parseYoutubeUrl(req.body.url.trim()) : null;
 
   if (!url) {
@@ -130,6 +129,8 @@ app.post('/convert', async (req, res) => {
     }
   }
 });
+
+app.use(BASE_PATH || '/', router);
 
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);

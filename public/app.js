@@ -68,7 +68,7 @@ convertBtn.addEventListener('click', async () => {
   showLoading();
 
   try {
-    const response = await fetch('/convert', {
+    const response = await fetch('convert', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

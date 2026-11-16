@@ -6,6 +6,7 @@ services:
     environment:
       PORT: 3000
       TRUST_PROXY: 1
+      BASE_PATH: /yt-to-mp3
     restart: unless-stopped
 
   cloudflared:
