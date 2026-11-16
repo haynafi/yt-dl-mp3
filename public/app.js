@@ -7,6 +7,19 @@ const errorState = document.getElementById('errorState');
 const errorMessage = document.getElementById('errorMessage');
 
 let downloadUrl = null;
+let downloadName = 'audio.mp3';
+
+function getFilename(response) {
+  const header = response.headers.get('Content-Disposition') || '';
+  const encoded = header.match(/filename\*=UTF-8''([^;]+)/i);
+  if (encoded) {
+    try {
+      return decodeURIComponent(encoded[1]);
+    } catch {}
+  }
+  const plain = header.match(/filename="([^"]+)"/i);
+  return plain ? plain[1] : 'audio.mp3';
+}
 
 function hideAllStates() {
   loadingState.classList.add('hidden');
@@ -55,7 +68,7 @@ convertBtn.addEventListener('click', async () => {
   showLoading();
 
   try {
-    const response = await fetch('http://localhost:3000/convert', {
+    const response = await fetch('/convert', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -68,6 +81,7 @@ convertBtn.addEventListener('click', async () => {
       throw new Error(errorData.error || 'Conversion failed');
     }
 
+    downloadName = getFilename(response);
     const blob = await response.blob();
     downloadUrl = URL.createObjectURL(blob);
     
@@ -82,7 +96,7 @@ downloadBtn.addEventListener('click', () => {
   if (downloadUrl) {
     const a = document.createElement('a');
     a.href = downloadUrl;
-    a.download = 'audio.mp3';
+    a.download = downloadName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);

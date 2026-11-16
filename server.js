@@ -4,12 +4,17 @@ const ffmpeg = require('fluent-ffmpeg');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const path = require('path');
-const { Readable } = require('stream');
 
-ffmpeg.setFfmpegPath('C:\\ffmpeg\\bin\\ffmpeg.exe');
+if (process.env.FFMPEG_PATH) {
+  ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
+}
 
 const app = express();
 const PORT = process.env.PORT || 3000;
+
+if (process.env.TRUST_PROXY) {
+  app.set('trust proxy', Number(process.env.TRUST_PROXY) || process.env.TRUST_PROXY);
+}
 
 app.use(cors());
 app.use(express.json());
@@ -29,58 +34,98 @@ app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+const YOUTUBE_HOSTS = ['youtube.com', 'www.youtube.com', 'm.youtube.com', 'music.youtube.com', 'youtu.be'];
+const MAX_DURATION_SECONDS = 60 * 60;
+
+function parseYoutubeUrl(input) {
+  try {
+    const parsed = new URL(input);
+    if (!['http:', 'https:'].includes(parsed.protocol)) return null;
+    if (!YOUTUBE_HOSTS.includes(parsed.hostname)) return null;
+    return parsed.href;
+  } catch {
+    return null;
+  }
+}
+
+function buildFilename(title) {
+  const clean = title.replace(/[\x00-\x1f\x7f"\\/:*?<>|]/g, '').replace(/\s+/g, ' ').trim() || 'audio';
+  const ascii = clean.replace(/[^\x20-\x7e]/g, '').trim() || 'audio';
+  return {
+    clean,
+    header: `attachment; filename="${ascii}.mp3"; filename*=UTF-8''${encodeURIComponent(clean)}.mp3`,
+  };
+}
+
 app.post('/convert', async (req, res) => {
-  const { url } = req.body;
+  const url = typeof req.body?.url === 'string' ? parseYoutubeUrl(req.body.url.trim()) : null;
 
   if (!url) {
-    return res.status(400).json({ error: 'YouTube URL is required' });
-  }
-
-  if (!url.includes('youtube.com') && !url.includes('youtu.be')) {
     return res.status(400).json({ error: 'Invalid YouTube URL' });
   }
 
   try {
     const info = await youtubedl(url, {
       dumpSingleJson: true,
+      noPlaylist: true,
       noCheckCertificates: true,
       noWarnings: true,
-      preferFreeFormats: true,
     });
 
-    const title = info.title.replace(/[^\w\s-]/g, '').trim() || 'audio';
+    if (info.duration > MAX_DURATION_SECONDS) {
+      return res.status(400).json({ error: 'Video is too long (max 60 minutes).' });
+    }
 
-    res.setHeader('Content-Disposition', `attachment; filename="${title}.mp3"`);
-    res.setHeader('Content-Type', 'audio/mpeg');
+    const { clean, header } = buildFilename(info.title || '');
 
-    const audioStream = youtubedl.exec(url, {
-      extractAudio: true,
-      audioFormat: 'mp3',
-      audioQuality: 0,
-      output: '-',
-      noCheckCertificates: true,
-      noWarnings: true,
-      preferFreeFormats: true,
+    const source = youtubedl.exec(
+      url,
+      { format: 'bestaudio', noPlaylist: true, output: '-', noCheckCertificates: true, noWarnings: true },
+      { stdio: ['ignore', 'pipe', 'pipe'] }
+    );
+
+    const converter = ffmpeg(source.stdout)
+      .noVideo()
+      .audioCodec('libmp3lame')
+      .audioBitrate(192)
+      .format('mp3')
+      .outputOptions('-metadata', `title=${clean}`);
+
+    const stop = () => {
+      source.kill('SIGKILL');
+      converter.kill('SIGKILL');
+    };
+
+    let started = false;
+    converter.on('start', () => {
+      started = true;
+      res.setHeader('Content-Disposition', header);
+      res.setHeader('Content-Type', 'audio/mpeg');
     });
 
-    audioStream.stdout.pipe(res);
-
-    audioStream.on('error', (err) => {
-      console.error('youtube-dl-exec error:', err);
+    const fail = (err) => {
+      console.error('Conversion error:', err.message);
+      stop();
       if (!res.headersSent) {
         res.status(500).json({ error: 'Conversion failed. Please try again.' });
+      } else {
+        res.destroy();
       }
+    };
+
+    source.on('error', fail);
+    converter.on('error', fail);
+    converter.on('end', () => console.log('Conversion finished successfully'));
+    res.on('close', () => {
+      if (!res.writableFinished) stop();
     });
 
-    audioStream.on('close', () => {
-      console.log('Conversion finished successfully');
-    });
-
+    converter.pipe(res, { end: true });
   } catch (error) {
-    console.error('Error:', error);
+    console.error('Error:', error.message);
     if (!res.headersSent) {
-      res.status(500).json({ 
-        error: 'Failed to process the video. Please check the URL and try again.' 
+      res.status(500).json({
+        error: 'Failed to process the video. Please check the URL and try again.',
       });
     }
   }

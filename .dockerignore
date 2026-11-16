@@ -1,0 +1,10 @@
+node_modules
+npm-debug.log*
+.git
+.gitignore
+.env
+.DS_Store
+ytdl-capture.png
+README.md
+Dockerfile
+docker-compose.yml

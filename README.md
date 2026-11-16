@@ -99,6 +99,14 @@ npm run dev
 http://localhost:3000
 ```
 
+## Docker
+
+```bash
+docker compose up -d --build
+```
+
+`TRUST_PROXY` (default `1` in `docker-compose.yml`) sets how many reverse proxies sit in front of the app, so rate limiting reads the real client IP.
+
 ## Usage
 
 1. Open the application in your web browser
