@@ -18,6 +18,12 @@ if (process.env.COOKIES_FILE && fs.existsSync(process.env.COOKIES_FILE)) {
   console.log('Using YouTube cookies');
 }
 
+const ytdlpOptions = {
+  noCheckCertificates: true,
+  noWarnings: true,
+  ...(cookiesFile && { cookies: cookiesFile }),
+};
+
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -76,9 +82,7 @@ router.post('/convert', async (req, res) => {
     const info = await youtubedl(url, {
       dumpSingleJson: true,
       noPlaylist: true,
-      noCheckCertificates: true,
-      noWarnings: true,
-      ...(cookiesFile && { cookies: cookiesFile }),
+      ...ytdlpOptions,
     });
 
     if (info.duration > MAX_DURATION_SECONDS) {
@@ -93,9 +97,7 @@ router.post('/convert', async (req, res) => {
         format: 'bestaudio',
         noPlaylist: true,
         output: '-',
-        noCheckCertificates: true,
-        noWarnings: true,
-        ...(cookiesFile && { cookies: cookiesFile }),
+        ...ytdlpOptions,
       },
       { stdio: ['ignore', 'pipe', 'pipe'] }
     );
