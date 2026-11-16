@@ -4,9 +4,18 @@ const ffmpeg = require('fluent-ffmpeg');
 const rateLimit = require('express-rate-limit');
 const cors = require('cors');
 const path = require('path');
+const fs = require('fs');
+const os = require('os');
 
 if (process.env.FFMPEG_PATH) {
   ffmpeg.setFfmpegPath(process.env.FFMPEG_PATH);
+}
+
+let cookiesFile = null;
+if (process.env.COOKIES_FILE && fs.existsSync(process.env.COOKIES_FILE)) {
+  cookiesFile = path.join(os.tmpdir(), 'yt-cookies.txt');
+  fs.copyFileSync(process.env.COOKIES_FILE, cookiesFile);
+  console.log('Using YouTube cookies');
 }
 
 const app = express();
@@ -69,6 +78,7 @@ router.post('/convert', async (req, res) => {
       noPlaylist: true,
       noCheckCertificates: true,
       noWarnings: true,
+      ...(cookiesFile && { cookies: cookiesFile }),
     });
 
     if (info.duration > MAX_DURATION_SECONDS) {
@@ -79,7 +89,14 @@ router.post('/convert', async (req, res) => {
 
     const source = youtubedl.exec(
       url,
-      { format: 'bestaudio', noPlaylist: true, output: '-', noCheckCertificates: true, noWarnings: true },
+      {
+        format: 'bestaudio',
+        noPlaylist: true,
+        output: '-',
+        noCheckCertificates: true,
+        noWarnings: true,
+        ...(cookiesFile && { cookies: cookiesFile }),
+      },
       { stdio: ['ignore', 'pipe', 'pipe'] }
     );
 

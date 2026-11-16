@@ -35,3 +35,6 @@ temp/
 downloads/
 *.mp3
 *.mp4
+
+# YouTube cookies (credentials)
+cookies/
